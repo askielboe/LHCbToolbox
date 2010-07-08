@@ -5,6 +5,10 @@ import sys
 import string
 import array
 
+DoFindConf = True
+DoFindLines = True
+DoFindRate = True
+
 # Define the logfiles you want to compare
 logfiles = ['trial.log'
             ]
@@ -16,38 +20,24 @@ relines = ["Hlt1SingleMuonNoIP",
            "Hlt1DiMuon"
            ]
 
-# Define class for analysis
-## class Data:
-##     a = 3.1415
-##     for i in range(len(logfiles)):
-##         vars()["file"+str(i)] = i
-
-
-## print Data.a
-## print Data.file1
-
-
 # ------------ FUNCTIONS --------------
 
-def FindConf(file):
-    f = open(file, 'r')
-    f.readline()
-    EOF = EOF(line)
-    while not EOF:
-        m = re.search("(Using trigger threshold settings \")(.+)(\" )",line)
-        if m:
-            print "# ------------------------------------------------ #"
-            print "# Configuration file: ", m.group(2)
-            print "# ------------------------------------------------ #"
-        else:
-            return False
-        
-        while notEOF:
-            if FindConf(line):
-                print FindConf(line)
-                break
-            else:
-                line = f.readline()
+def FindConf(line):
+    m = re.search("(Using trigger threshold settings \")(.+)(\" )",line)
+    if m:
+        print "# ------------------------------------------------------------ #"
+        print "# Configuration file: ", m.group(2)
+        print "# ------------------------------------------------------------ #"
+        return True
+    else:
+        return False
+    
+##         while not EOF(line):
+##             if FindConf(line):
+##                 print FindConf(line)
+##                 break
+##             else:
+##                 line = f.readline()
 
 def FindLines(line):
     global relines
@@ -80,23 +70,34 @@ def main():
         print "Opening file: ", file
         
         f = open(file, 'r')
-        
-        line = f.readline()
-        
-        while not EOF(line):
 
-            if FindLines(line):
-                LineName = FindLines(line)
-                f.readline() # Skip a line
-                while not EOF(line):
-                    if FindAccept(line) == False:
-                        line = f.readline()
-                    else:
-                        space = 50-len(LineName)
-                        print LineName + " " * space   + FindAccept(line)
-                        break
+        line = f.readline() 
 
-            line = f.readline()
+        if DoFindConf:
+            while not FindConf(line):
+                line = f.readline()
+
+        if DoFindLines:
+            while not EOF(line):
+                if FindLines(line):
+                    LineName = FindLines(line)
+                    f.readline() # Skip a line
+                    while not EOF(line):
+                        if not FindAccept(line):
+                            line = f.readline()
+                        else:
+                            space = 35-len(LineName)
+                            TheLine = LineName + " " * space + FindAccept(line)
+                            print TheLine
+                            if DoFindRate:
+                                m = re.search("(\w+)PostScaler\s+\|\s+(\d+)\s\|\s+(\d+)\s\|",TheLine)
+                                if m:
+                                    print "----------------------------------------------------"
+                                    print "Frequency for line: ", m.group(1), " = ", m.group(3)
+                                    print "----------------------------------------------------\n"
+                            break
+
+                line = f.readline()
 
 if __name__ == "__main__":
     main()

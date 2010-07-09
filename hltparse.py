@@ -10,11 +10,15 @@ DoFindLines = True
 DoFindRate = True
 
 # Define the logfiles you want to compare
-logfiles = ['trial.log'
+logfiles = ["StrippedPsi_MC.log",
+            "MinBias_MC.log"
+            #"test.log"
             ]
 
 # Define the lines you are interested in
-relines = ["Hlt1SingleMuonNoIP",
+relines = [#"Hlt1DiMuonNoPV2L0VFChi2OverN",
+           #"Hlt1DiMuonNoPV2L0PostScaler"
+           "Hlt1SingleMuonNoIP",
            "Hlt1SingleMuonIP",
            "Hlt1MuonPrep",
            "Hlt1DiMuon"
@@ -26,7 +30,7 @@ def FindConf(line):
     m = re.search("(Using trigger threshold settings \")(.+)(\" )",line)
     if m:
         print "# ------------------------------------------------------------ #"
-        print "# Configuration file: ", m.group(2)
+        print "# Configuration: ", m.group(2)
         print "# ------------------------------------------------------------ #"
         return True
     else:
@@ -44,14 +48,15 @@ def FindLines(line):
     result = False
     # Find trigger lines of interest and parse their contents
     for regex in relines:
-        m = re.search("(^" + regex + "[a-zA-Z0-9]+)",line)
+        m = re.search("(^" + regex + "\w*)",line)
         if m and re.search("SUCCESS",line):
             result =  m.group(0) # If we get a match print the whole line
             break # No need to parse the rest of the regexpressions
     return result
 
 def FindAccept(line):
-    m = re.search("(\#accept\"\s+)(.+)(-------   \|   ------)",line)
+    m = re.search("(accept\"\s+)(\|\s+\d+\s\|\s+\d+\s\|)",line)
+    #m = re.search("(\#accept\"\s+)(.+)(-------   \|   ------)",line)
     if m:
         return m.group(2)
     else:
@@ -67,7 +72,8 @@ def EOF(line):
 def main():
     global logfiles
     for file in logfiles:
-        print "Opening file: ", file
+        print "# ------------------------------------------------------------ #"
+        print "# Opening file: ", file
         
         f = open(file, 'r')
 
@@ -81,7 +87,7 @@ def main():
             while not EOF(line):
                 if FindLines(line):
                     LineName = FindLines(line)
-                    f.readline() # Skip a line
+                    #f.readline() # Skip a line
                     while not EOF(line):
                         if not FindAccept(line):
                             line = f.readline()
@@ -98,6 +104,6 @@ def main():
                             break
 
                 line = f.readline()
-
+        f.close()
 if __name__ == "__main__":
     main()
